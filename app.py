@@ -18,9 +18,16 @@ class AIAssistant:
                 }],
                 max_tokens=4000
             )
-            return True, response.content
+            # response.content'i string'e çevir
+            return {
+                'success': True,
+                'response': str(response.content) if response.content else "Yanıt alınamadı."
+            }
         except Exception as e:
-            return False, str(e)
+            return {
+                'success': False,
+                'error': str(e)
+            }
 
 @app.route('/')
 def home():
@@ -29,20 +36,27 @@ def home():
 @app.route('/api/service', methods=['POST'])
 def process_service():
     try:
-        data = request.json
-        assistant = AIAssistant()
-        success, response = assistant.generate_response(
-            data.get('service_type'),
-            data.get('input')
-        )
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Veri bulunamadı'})
         
-        if success:
-            return jsonify({'success': True, 'response': response})
-        else:
-            return jsonify({'success': False, 'error': response})
+        service_type = data.get('service_type')
+        user_input = data.get('input')
+        
+        if not service_type or not user_input:
+            return jsonify({'success': False, 'error': 'Eksik parametre'})
             
+        assistant = AIAssistant()
+        result = assistant.generate_response(service_type, user_input)
+        
+        # result zaten dictionary formatında
+        return jsonify(result)
+        
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
