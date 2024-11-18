@@ -13,6 +13,37 @@
             0%, 100% { opacity: 1; }
             50% { opacity: .5; }
         }
+
+        /* Markdown benzeri stil için */
+        .markdown-style h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1a365d;
+        }
+        .markdown-style h2 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: #2c5282;
+        }
+        .markdown-style p {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .markdown-style ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-style code {
+            background-color: #f7fafc;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
@@ -20,7 +51,10 @@
         <!-- Header -->
         <header class="text-center mb-12">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">AI Asistan</h1>
-            <p class="text-gray-600">Yapay zeka destekli asistanınız</p>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                Size özel yapay zeka destekli asistanınız. Veri analizi, içerik yazma, kod geliştirme, 
+                çeviri ve araştırma konularında profesyonel destek alın.
+            </p>
         </header>
 
         <!-- Ana İçerik -->
@@ -33,29 +67,31 @@
                         Hizmet Seçin
                     </label>
                     <select id="serviceType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <option value="type1">Hizmet 1</option>
-                        <option value="type2">Hizmet 2</option>
-                        <option value="type3">Hizmet 3</option>
+                        <option value="analysis">📊 Veri Analizi</option>
+                        <option value="writing">📝 İçerik Yazma</option>
+                        <option value="coding">💻 Kod Geliştirme</option>
+                        <option value="translation">🌐 Çeviri</option>
+                        <option value="research">🔍 Araştırma</option>
                     </select>
                 </div>
 
                 <!-- Durum Açıklaması -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Durumunuzu Anlatın
+                        Detaylı Açıklama
                     </label>
                     <textarea 
                         id="userInput" 
                         rows="5" 
                         class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        placeholder="Lütfen durumunuzu detaylı bir şekilde anlatın..."></textarea>
+                        placeholder="Seçtiğiniz hizmet tipine göre detaylı açıklama yapın..."></textarea>
                 </div>
 
                 <!-- Gönder Butonu -->
                 <button 
                     onclick="generateResponse()" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
-                    Analiz Et
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                    <span>Analiz Et</span>
                 </button>
             </div>
 
@@ -77,7 +113,7 @@
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Analiz Sonucu</h2>
                     <div class="prose max-w-none">
-                        <div id="responseContent" class="text-gray-600 whitespace-pre-wrap"></div>
+                        <div id="responseContent" class="text-gray-600 whitespace-pre-wrap markdown-style"></div>
                     </div>
                 </div>
             </div>
@@ -93,11 +129,12 @@
         const userInput = document.getElementById('userInput').value;
 
         if (!userInput.trim()) {
-            alert('Lütfen durumunuzu anlatın');
+            alert('Lütfen detaylı açıklama yapın');
             return;
         }
 
         try {
+            // UI'ı hazırla
             loading.classList.remove('hidden');
             responseDiv.classList.add('hidden');
             responseContent.textContent = '';
@@ -116,7 +153,8 @@
             const data = await response.json();
 
             if (data.success) {
-                responseContent.textContent = data.response;
+                // Markdown formatlama
+                responseContent.innerHTML = formatMarkdown(data.response);
                 responseDiv.classList.remove('hidden');
             } else {
                 throw new Error(data.error || 'Bir hata oluştu');
@@ -127,6 +165,34 @@
             loading.classList.add('hidden');
         }
     }
+
+    function formatMarkdown(text) {
+        return text
+            .replace(/# (.*)/g, '<h1>$1</h1>')
+            .replace(/## (.*)/g, '<h2>$1</h2>')
+            .replace(/\* (.*)/g, '<li>$1</li>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+    }
+
+    // Textarea'da Enter tuşuyla gönderme
+    document.getElementById('userInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            generateResponse();
+        }
+    });
+
+    // Hizmet tipine göre placeholder güncelleme
+    document.getElementById('serviceType').addEventListener('change', function(e) {
+        const placeholders = {
+            'analysis': 'Analiz edilecek veri veya konuyu detaylı açıklayın...',
+            'writing': 'Oluşturulacak içeriğin konusu ve gereksinimlerini belirtin...',
+            'coding': 'Çözülmesi gereken problemi veya geliştirmek istediğiniz kodu açıklayın...',
+            'translation': 'Çevrilmesini istediğiniz metni girin...',
+            'research': 'Araştırılmasını istediğiniz konuyu ve kapsamı belirtin...'
+        };
+        document.getElementById('userInput').placeholder = placeholders[e.target.value] || 'Detaylı açıklama yapın...';
+    });
     </script>
 </body>
 </html>
