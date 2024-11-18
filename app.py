@@ -8,17 +8,84 @@ class AIAssistant:
     def __init__(self):
         self.client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
     
+    def get_prompt(self, service_type, user_input):
+        prompts = {
+            'analysis': f"""
+                Veri analisti olarak aşağıdaki konuyu detaylı analiz et:
+                
+                KONU: {user_input}
+                
+                Lütfen şu başlıklar altında analiz yap:
+                
+                # ÖZET ANALİZ
+                # TEMEL BULGULAR
+                # ÖNERİLER
+                # SONUÇ
+            """,
+            
+            'writing': f"""
+                İçerik yazarı olarak aşağıdaki konuda profesyonel bir metin oluştur:
+                
+                KONU: {user_input}
+                
+                Lütfen şu özelliklere dikkat et:
+                - SEO uyumlu
+                - Akıcı anlatım
+                - Özgün içerik
+                - Dikkat çekici başlıklar
+            """,
+            
+            'coding': f"""
+                Yazılım geliştirici olarak aşağıdaki problemi çöz:
+                
+                PROBLEM: {user_input}
+                
+                Lütfen şunları sağla:
+                # ÇÖZÜM AÇIKLAMASI
+                # KOD ÖRNEĞİ
+                # KULLANIM KILAVUZU
+                # NOTLAR
+            """,
+            
+            'translation': f"""
+                Profesyonel çevirmen olarak aşağıdaki metni çevir:
+                
+                METİN: {user_input}
+                
+                Lütfen şunlara dikkat et:
+                - Kültürel uyarlamalar
+                - Deyimsel karşılıklar
+                - Profesyonel terminoloji
+                - Akıcı anlatım
+            """,
+            
+            'research': f"""
+                Araştırmacı olarak aşağıdaki konuyu detaylı incele:
+                
+                KONU: {user_input}
+                
+                Lütfen şu başlıklar altında raporla:
+                # MEVCUT DURUM
+                # ARAŞTIRMA BULGULARI
+                # KARŞILAŞTIRMALI ANALİZ
+                # SONUÇ VE ÖNERİLER
+            """
+        }
+        return prompts.get(service_type, f"Uzman olarak şu konuyu değerlendir: {user_input}")
+
     def generate_response(self, service_type, user_input):
         try:
+            prompt = self.get_prompt(service_type, user_input)
+            
             response = self.client.messages.create(
                 model="claude-3-sonnet-20240229",
                 messages=[{
                     "role": "user", 
-                    "content": f"Hizmet: {service_type}\nDurum: {user_input}"
+                    "content": prompt
                 }],
                 max_tokens=4000
             )
-            # response.content'i string'e çevir
+            
             return {
                 'success': True,
                 'response': str(response.content) if response.content else "Yanıt alınamadı."
@@ -49,7 +116,6 @@ def process_service():
         assistant = AIAssistant()
         result = assistant.generate_response(service_type, user_input)
         
-        # result zaten dictionary formatında
         return jsonify(result)
         
     except Exception as e:
